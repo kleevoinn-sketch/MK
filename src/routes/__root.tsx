@@ -6,12 +6,19 @@ import { CartProvider } from '@/lib/cart'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Toast } from '@/components/Toast'
+import { applyLiveCatalogue } from '@/data/products'
+import { getLiveCatalogue } from '@/lib/catalogue'
 
 const siteName = 'KLEEVO™ – Home & Car Cleaning Products | S.M Enterprises'
 const siteDescription =
   'Shop genuine KLEEVO Dish Wash, Cloth Detergent, Floor Wash, Toilet Cleaner, Bathroom Cleaner, Car Wash and Glass Cleaner online. 500 ml bottles from ₹100. Prepaid UPI ordering with doorstep delivery.'
 
 export const Route = createRootRoute({
+  loader: async () => {
+    applyLiveCatalogue(await getLiveCatalogue())
+    return null
+  },
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {
@@ -71,5 +78,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="mx-auto max-w-md px-4 py-24 text-center">
+      <h1 className="text-5xl font-extrabold text-[#1347b8]">404</h1>
+      <p className="mt-3 text-gray-600">We couldn't find that page.</p>
+      <a href="/" className="mt-6 inline-block rounded-md bg-[#fb641b] px-6 py-3 font-bold text-white">Back to KLEEVO</a>
+    </div>
   )
 }

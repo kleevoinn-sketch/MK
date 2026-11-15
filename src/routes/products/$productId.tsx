@@ -17,6 +17,32 @@ export const Route = createFileRoute('/products/$productId')({
       ? [
           { title: `${loaderData.name} ${loaderData.size} – ${inr(loaderData.price)} | KLEEVO` },
           { name: 'description', content: loaderData.shortDescription },
+          { property: 'og:title', content: `${loaderData.name} ${loaderData.size} | KLEEVO` },
+          { property: 'og:description', content: loaderData.shortDescription },
+          { property: 'og:image', content: loaderData.image },
+        ]
+      : [],
+    // Only facts we actually have: no ratings/reviews are claimed.
+    scripts: loaderData
+      ? [
+          {
+            type: 'application/ld+json',
+            children: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Product',
+              name: `${loaderData.name} ${loaderData.size}`,
+              description: loaderData.shortDescription,
+              image: loaderData.image,
+              brand: { '@type': 'Brand', name: 'KLEEVO' },
+              manufacturer: { '@type': 'Organization', name: 'S.M ENTERPRISES' },
+              offers: {
+                '@type': 'Offer',
+                priceCurrency: 'INR',
+                price: loaderData.price,
+                availability: loaderData.stock !== undefined && loaderData.stock <= 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+              },
+            }),
+          },
         ]
       : [],
   }),
@@ -77,10 +103,10 @@ function ProductPage() {
             </div>
           </div>
           <div className="mt-4 hidden grid-cols-2 gap-3 sm:grid">
-            <button onClick={() => add(p.id, qty)} className="flex items-center justify-center gap-2 rounded-md bg-[#ff9f00] py-4 text-base font-bold text-white shadow hover:bg-[#f39200]">
+            <button disabled={p.stock !== undefined && p.stock <= 0} onClick={() => add(p.id, qty)} className="disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2 rounded-md bg-[#ff9f00] py-4 text-base font-bold text-white shadow hover:bg-[#f39200]">
               <ShoppingCart className="h-5 w-5" /> ADD TO CART
             </button>
-            <button onClick={() => { add(p.id, qty); navigate({ to: '/cart' }) }} className="flex items-center justify-center gap-2 rounded-md bg-[#fb641b] py-4 text-base font-bold text-white shadow hover:bg-[#ec5810]">
+            <button disabled={p.stock !== undefined && p.stock <= 0} onClick={() => { add(p.id, qty); navigate({ to: '/cart' }) }} className="disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2 rounded-md bg-[#fb641b] py-4 text-base font-bold text-white shadow hover:bg-[#ec5810]">
               <Zap className="h-5 w-5" /> ORDER NOW
             </button>
           </div>
@@ -198,8 +224,8 @@ function ProductPage() {
 
       {/* Mobile sticky buy bar */}
       <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 shadow-[0_-4px_12px_rgba(0,0,0,.12)] sm:hidden">
-        <button onClick={() => add(p.id, qty)} className="bg-white py-4 text-sm font-bold text-gray-900">ADD TO CART</button>
-        <button onClick={() => { add(p.id, qty); navigate({ to: '/cart' }) }} className="bg-[#fb641b] py-4 text-sm font-bold text-white">ORDER NOW · {inr(p.price * qty)}</button>
+        <button disabled={p.stock !== undefined && p.stock <= 0} onClick={() => add(p.id, qty)} className="bg-white py-4 text-sm font-bold text-gray-900">ADD TO CART</button>
+        <button disabled={p.stock !== undefined && p.stock <= 0} onClick={() => { add(p.id, qty); navigate({ to: '/cart' }) }} className="bg-[#fb641b] py-4 text-sm font-bold text-white">ORDER NOW · {inr(p.price * qty)}</button>
       </div>
     </div>
   )

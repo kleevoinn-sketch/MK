@@ -1,9 +1,11 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2, MapPin, Truck } from 'lucide-react'
 import { inr } from '@/data/products'
 import { useCart } from '@/lib/cart'
 import { placeOrder } from '@/lib/orders'
+import { getToken } from '@/lib/auth'
+import { getPaymentOptions, startRazorpayPayment, verifyRazorpayPayment } from '@/lib/razorpay'
 import { CheckoutSteps } from '@/components/CheckoutSteps'
 import { PriceDetails } from '@/components/OrderSummary'
 import { EmptyCart } from '@/components/EmptyCart'
@@ -47,10 +49,15 @@ function DeliveryPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [razorpayOn, setRazorpayOn] = useState(false)
+  useEffect(() => {
+    getPaymentOptions().then((o) => setRazorpayOn(o.razorpay)).catch(() => setRazorpayOn(false))
+  }, [])
 
   if (!cart.ready) return <div className="py-24 text-center text-gray-400">Loading…</div>
   if (!cart.lines.length) return <div className="px-3 py-6"><CheckoutSteps current={3} /><EmptyCart /></div>
-  if (!cart.paymentReference || !cart.orderReviewed) {
+  const manualPaid = Boolean(cart.paymentReference && cart.orderReviewed)
+  if (!manualPaid && !razorpayOn) {
     return (
       <div className="mx-auto max-w-xl px-3 py-16 text-center">
         <p className="text-gray-600">Please complete payment and confirm your order first.</p>
@@ -72,8 +79,10 @@ function DeliveryPage() {
     setSubmitting(true)
     setServerError('')
     try {
+      const accessToken = (await getToken()) ?? undefined
       const res = await placeOrder({
         data: {
+          accessToken,
           items: cart.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
           paymentReference: cart.paymentReference,
           delivery: {
@@ -88,8 +97,70 @@ function DeliveryPage() {
       })
       await navigate({ to: '/order/$orderNumber', params: { orderNumber: res.orderNumber } })
       cart.clear()
-    } catch {
+    } catch (err) {
+      const m = err instanceof Error ? err.message : ''
+      if (/stock|unavailable|coupon|Too many/i.test(m)) {
+        setServerError(m)
+        setSubmitting(false)
+        return
+      }
       setServerError('We could not place your order right now. Please try again, or call / WhatsApp us and we will help you.')
+      setSubmitting(false)
+    }
+  }
+
+  const loadRazorpay = () =>
+    new Promise<void>((resolve, reject) => {
+      if ((window as any).Razorpay) return resolve()
+      const el = document.createElement('script')
+      el.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      el.onload = () => resolve()
+      el.onerror = () => reject(new Error('Could not load the payment window'))
+      document.body.appendChild(el)
+    })
+
+  const payOnline = async () => {
+    const errs = validate(form)
+    setErrors(errs)
+    if (Object.keys(errs).length) return
+    setSubmitting(true)
+    setServerError('')
+    try {
+      const accessToken = (await getToken()) ?? undefined
+      const [start] = await Promise.all([
+        startRazorpayPayment({
+          data: {
+            accessToken,
+            items: cart.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+            delivery: { ...form, customerName: form.customerName.trim(), phone: form.phone.trim(), alternatePhone: form.alternatePhone.trim(), email: form.email.trim(), pincode: form.pincode.trim() },
+          },
+        }),
+        loadRazorpay(),
+      ])
+      const rzp = new (window as any).Razorpay({
+        key: start.keyId,
+        order_id: start.razorpayOrderId,
+        amount: start.amountPaise,
+        currency: 'INR',
+        name: 'KLEEVO',
+        description: `Order ${start.orderNumber}`,
+        prefill: { name: form.customerName, contact: form.phone, email: form.email },
+        theme: { color: '#1347b8' },
+        modal: { ondismiss: () => { setSubmitting(false); setServerError('Payment was not completed. You can try again.') } },
+        handler: async (r: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          try {
+            await verifyRazorpayPayment({ data: r })
+            await navigate({ to: '/order/$orderNumber', params: { orderNumber: start.orderNumber } })
+            cart.clear()
+          } catch {
+            setServerError(`We could not confirm your payment yet. If money was debited, do not pay again — quote order ${start.orderNumber} when you call or WhatsApp us.`)
+            setSubmitting(false)
+          }
+        },
+      })
+      rzp.open()
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Could not start online payment')
       setSubmitting(false)
     }
   }
@@ -135,11 +206,20 @@ function DeliveryPage() {
           </div>
           {serverError && <p className="mx-5 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{serverError}</p>}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-5 py-4">
-            <span className="flex items-center gap-2 text-sm text-gray-600"><Truck className="h-5 w-5 text-[#1347b8]" /> Prepaid · UTR {cart.paymentReference}</span>
-            <button disabled={submitting} className="flex items-center gap-2 rounded-md bg-[#fb641b] px-8 py-3.5 font-bold text-white shadow hover:bg-[#ec5810] disabled:opacity-70">
-              {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-              {submitting ? 'PLACING ORDER…' : `PLACE ORDER · ${inr(cart.total)}`}
-            </button>
+            <span className="flex items-center gap-2 text-sm text-gray-600"><Truck className="h-5 w-5 text-[#1347b8]" /> {manualPaid ? `Prepaid · UTR ${cart.paymentReference}` : 'Pay securely online'}</span>
+            <div className="flex flex-wrap gap-2">
+              {razorpayOn && (
+                <button type="button" onClick={payOnline} disabled={submitting} className="flex items-center gap-2 rounded-md bg-[#1347b8] px-6 py-3.5 font-bold text-white shadow hover:bg-[#0f3a99] disabled:opacity-70">
+                  {submitting && <Loader2 className="h-5 w-5 animate-spin" />} PAY ONLINE · {inr(cart.total)}
+                </button>
+              )}
+              {manualPaid && (
+                <button disabled={submitting} className="flex items-center gap-2 rounded-md bg-[#fb641b] px-8 py-3.5 font-bold text-white shadow hover:bg-[#ec5810] disabled:opacity-70">
+                  {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                  {submitting ? 'PLACING ORDER…' : `PLACE ORDER · ${inr(cart.total)}`}
+                </button>
+              )}
+            </div>
           </div>
         </form>
         <PriceDetails />

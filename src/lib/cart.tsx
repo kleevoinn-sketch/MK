@@ -77,6 +77,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       delivery,
       total: subtotal + delivery,
       add: (productId, qty = 1) => {
+        const live = products.find((x) => x.id === productId)
+        if (live && live.stock !== undefined && live.stock <= 0) {
+          setToast(`${live.name} is out of stock`)
+          return
+        }
         setRaw((prev) => {
           const found = prev.find((l) => l.productId === productId)
           if (found) return prev.map((l) => (l.productId === productId ? { ...l, quantity: Math.min(50, l.quantity + qty) } : l))

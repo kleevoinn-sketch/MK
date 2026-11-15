@@ -22,6 +22,8 @@ export interface Product {
   areas?: string
   howToUse: Array<string>
   caution: Array<string>
+  /** Live stock from the database; undefined until loaded. */
+  stock?: number
 }
 
 export const BRAND = {
@@ -32,6 +34,8 @@ export const BRAND = {
   whatsapp: '9632583912',
   instagram: 'kleevo.in',
   instagramUrl: 'https://www.instagram.com/kleevo.in/',
+  gstin: '29JRYPK8859R1ZR',
+  address: 'ನಗರಕೆರೆ ರಸ್ತೆ ವೇದನಾಥಪುರ ದೇವಸ್ಥಾನ ರಸ್ತೆ ಹತ್ತಿರ ಮದ್ದೂರು',
 }
 
 export const DELIVERY_FEE = 0
@@ -257,6 +261,19 @@ const products: Array<Product> = [
     ],
   },
 ]
+
+/** Overlay live DB price/MRP/stock onto the bundled catalogue (descriptions & images stay local). */
+export function applyLiveCatalogue(rows: Array<{ slug: string; price: number; mrp: number; stock: number; active: boolean }>) {
+  for (const r of rows) {
+    const p = products.find((x) => x.id === r.slug)
+    if (!p) continue
+    p.price = r.price
+    p.mrp = r.mrp
+    p.stock = r.active ? r.stock : 0
+  }
+}
+
+export const isSoldOut = (p: Product) => p.stock !== undefined && p.stock <= 0
 
 export function getProduct(id: string) {
   return products.find((p) => p.id === id)

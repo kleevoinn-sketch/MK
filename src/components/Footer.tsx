@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Mail, Phone } from 'lucide-react'
 import products, { BRAND, img } from '@/data/products'
 import { InstagramLogo, WhatsAppLogo } from './BrandIcons'
+import { POLICY_LINKS } from '@/data/policies'
 
 export function Footer() {
   return (
@@ -36,6 +37,10 @@ export function Footer() {
             <li><Link to="/" hash="how-to-use" className="hover:text-white hover:underline">Usage Instructions</Link></li>
             <li><Link to="/" hash="certifications" className="hover:text-white hover:underline">Certifications</Link></li>
             <li><Link to="/" hash="contact" className="hover:text-white hover:underline">Contact Us</Link></li>
+            <li><Link to="/account" className="hover:text-white hover:underline">My Account &amp; Orders</Link></li>
+            {POLICY_LINKS.map((l) => (
+              <li key={l.slug}><Link to="/policies/$slug" params={{ slug: l.slug }} className="hover:text-white hover:underline">{l.title}</Link></li>
+            ))}
           </ul>
         </div>
         <div>
@@ -49,6 +54,11 @@ export function Footer() {
                   <a key={p} href={`tel:+91${p}`} className="block font-semibold text-white hover:underline">+91 {p}</a>
                 ))}
               </span>
+            </li>
+            <li className="text-xs leading-relaxed text-blue-200">
+              <span className="block font-semibold text-white">{BRAND.manufacturer}</span>
+              {BRAND.address}
+              <span className="mt-1 block">GSTIN: {BRAND.gstin}</span>
             </li>
             <li>
               <a href={`mailto:${BRAND.email}`} className="flex items-center gap-2 hover:text-white">

@@ -1,7 +1,8 @@
 # Plan
-1. ✅ Catalogue, product pages with label description / usage / caution, original label viewer
-2. ✅ Cart → UPI QR payment → order confirmation → delivery details → order placed (saved in Netlify Database)
-3. ✅ Contacts, Instagram/WhatsApp logos, certifications, slide-out menu
-4. ⏳ Verify the full flow on a deploy preview and polish mobile layout
-5. ⏳ Admin page to view orders and mark payments verified / dispatched
-6. ⏳ Order notification (email/WhatsApp) to the shop when an order is placed
+1. ✅ Catalogue, product pages, cart, UPI QR checkout, order confirmation
+2. ✅ Supabase schema + RLS + stock-safe order functions (applied to the Supabase project)
+3. ✅ Server-side order pricing, Razorpay (create / verify / webhook), customer accounts, admin dashboard, policy pages, SEO files
+4. ⏳ Set env vars on Netlify, create first admin user, enter real stock, install deps & run `pnpm build` / `pnpm typecheck` (not run in the build session)
+5. ⏳ Test Razorpay in test mode end-to-end; add the webhook URL `/api/razorpay-webhook` in the Razorpay dashboard
+6. ⏳ Email / WhatsApp notifications (needs a provider and credentials; table `notifications` is ready)
+7. ⏳ Invoices (PDF), banners/review-moderation screens in admin, add/delete product + image upload UI (storage bucket `product-images` exists)

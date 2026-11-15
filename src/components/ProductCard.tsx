@@ -33,10 +33,12 @@ export function ProductCard({ product: p }: { product: Product }) {
           {off > 0 && <span className="text-sm text-gray-400 line-through">M.R.P. {inr(p.mrp)}</span>}
         </div>
         <span className="text-[11px] text-gray-500">Inclusive of all taxes</span>
+        {p.stock !== undefined && (p.stock <= 0 ? <span className="mt-1 text-xs font-bold text-red-600">Out of stock</span> : p.stock <= 10 ? <span className="mt-1 text-xs font-semibold text-amber-600">Only {p.stock} left</span> : null)}
         <div className="mt-3 grid grid-cols-2 gap-2 pt-1 sm:mt-auto">
           <button
             onClick={() => add(p.id)}
-            className="flex items-center justify-center gap-1.5 rounded-md bg-[#ff9f00] px-2 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-[#f39200]"
+            disabled={p.stock !== undefined && p.stock <= 0}
+            className="disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-1.5 rounded-md bg-[#ff9f00] px-2 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-[#f39200]"
           >
             <ShoppingCart className="h-4 w-4" /> ADD TO CART
           </button>
@@ -45,7 +47,8 @@ export function ProductCard({ product: p }: { product: Product }) {
               add(p.id)
               navigate({ to: '/cart' })
             }}
-            className="flex items-center justify-center gap-1.5 rounded-md bg-[#fb641b] px-2 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-[#ec5810]"
+            disabled={p.stock !== undefined && p.stock <= 0}
+            className="disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-1.5 rounded-md bg-[#fb641b] px-2 py-2.5 text-[13px] font-bold text-white shadow-sm hover:bg-[#ec5810]"
           >
             <Zap className="h-4 w-4" /> ORDER NOW
           </button>

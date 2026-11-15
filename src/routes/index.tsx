@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { EnquiryForm } from '@/components/EnquiryForm'
 import { z } from 'zod'
 import { useMemo, useState } from 'react'
 import { AlertTriangle, BadgeCheck, ChevronDown, CreditCard, Factory, Mail, PackageCheck, Phone, QrCode, ShieldCheck, ShoppingCart, Truck } from 'lucide-react'
@@ -303,6 +304,7 @@ function Contact() {
           <div className="flex items-center gap-3 rounded-lg bg-white/10 p-4 ring-1 ring-white/20">
             <CreditCard className="h-5 w-5" /> <span>Prepaid orders via UPI QR code</span>
           </div>
+          <EnquiryForm />
         </div>
       </div>
     </section>
