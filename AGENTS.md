@@ -14,7 +14,7 @@ E-commerce site for KLEEVO cleaning products (manufactured by S.M ENTERPRISES). 
 - Database: Supabase project `pahainqxjjdywujrzpss`. Schema/RLS/functions were applied as migrations `storefront_schema` and `seed_catalogue`; run `supabase db pull` to export them into `supabase/migrations/`. Stock is deducted once by `confirm_order()` and restored by `restock_order()`.
 - Routes: `/` (catalogue, how to order, about, certifications, usage/caution, contact), `/products/$productId`, `/cart`, `/checkout/payment` (UPI QR + UTR entry), `/checkout/confirm`, `/checkout/delivery` (address form, places order), `/order/$orderNumber`.
 - Components in `src/components/` (Header with slide-out menu modelled on the reference image, Footer, ProductCard, CheckoutSteps, PriceDetails, Toast, brand icons).
-- `public/img/products` — real bottle photos cropped from the shop video (all except glass-cleaner, which is still an AI-generated placeholder until a real photo is supplied); `public/img/labels` — original label scans; logo, certifications and UPI QR in `public/img`.
+- `public/img/products` — real bottle photos cropped from the shop video (glass-cleaner is a code-rendered illustration (real label scan + logo on a drawn bottle) until a real photo is supplied); `public/img/labels` — original label scans; logo, certifications and UPI QR in `public/img`.
 
 ## Notes
 - Two payment paths: Razorpay (automatic, needs env keys + `razorpay_enabled` in admin Settings) and manual UPI QR (customer enters UTR; admin clicks *Mark payment verified*). Stock is reduced only when an order is confirmed.
