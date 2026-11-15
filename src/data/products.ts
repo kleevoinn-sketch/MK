@@ -280,7 +280,8 @@ export function getProduct(id: string) {
 }
 
 export function img(src: string, w: number) {
-  return `/.netlify/images?url=${encodeURIComponent(src)}&w=${w}&fm=webp&q=80`
+  void w
+  return src
 }
 
 export const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`

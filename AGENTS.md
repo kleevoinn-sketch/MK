@@ -1,13 +1,13 @@
 # KLEEVO storefront
 
-E-commerce site for KLEEVO cleaning products (manufactured by S.M ENTERPRISES). TanStack Start + React 19 + Tailwind 4 on Netlify; data in **Supabase** (Postgres + Auth + Storage), payments via Razorpay (+ manual UPI QR fallback). The old Netlify Database/Drizzle code in `db/` is no longer used by the app.
+E-commerce site for KLEEVO cleaning products (manufactured by S.M ENTERPRISES). TanStack Start + React 19 + Tailwind 4 on Vercel (Nitro); data in **Supabase** (Postgres + Auth + Storage), payments via Razorpay (+ manual UPI QR fallback).
 
 ## Key files
-- `src/data/products.ts` — catalogue (prices, MRP, label text: description, how-to-use, caution), brand contacts, `img()` helper (Netlify Image CDN), `inr()` formatter.
+- `src/data/products.ts` — catalogue (prices, MRP, label text: description, how-to-use, caution), brand contacts, `img()` helper (passthrough), `inr()` formatter.
 - `src/lib/cart.tsx` — cart context (localStorage) + payment ref/review flags (sessionStorage).
 - `src/lib/supabase.server.ts` — server-only REST helpers (service role). No SDK; plain `fetch`. Never import from client code.
 - `src/lib/orders.ts` — `placeOrder` (UPI QR) / `getOrder`; calls the DB function `create_order`, which prices the cart, checks stock and applies coupons. Never trust client prices.
-- `src/lib/razorpay.ts` + `razorpay.server.ts` + `netlify/functions/razorpay-webhook.mts` — Razorpay order creation, signature + server-side status verification, idempotent `finalizePayment`, webhook.
+- `src/lib/razorpay.ts` + `razorpay.server.ts` + `src/routes/api/razorpay-webhook.ts` — Razorpay order creation, signature + server-side status verification, idempotent `finalizePayment`, webhook.
 - `src/lib/admin.ts` + `src/routes/admin.tsx` — admin API/dashboard. Every call re-checks `is_kleevo_admin()` in the DB.
 - `src/lib/account.ts`, `auth.ts`, routes `/login`, `/account` — customer accounts, order history, cancellation requests, saved addresses.
 - `src/lib/catalogue.ts` — live price/MRP/stock from the DB, overlaid onto `src/data/products.ts` in the root loader.
